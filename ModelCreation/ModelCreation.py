@@ -121,8 +121,27 @@ class ModelCreation:
             f.close()
             raise e
 
+    def SavingModel(self,model):
+
+        if not os.path.exists('LoggedData'):
+            os.makedirs('LoggedData')
+
+        f = open(os.path.join('LoggedData', 'ModelCreation.txt'), 'a+')
+
+        try:
+            if not os.path.exists('TrainedModel'):
+                os.makedirs('TrainedModel')
+
+            model.save(os.path.join('TrainedModel', 'TrainedANN.h5'))
+            Logger().log(f, 'Model saved successfully!')
+            f.close()
+
+        except Exception as e:
+            Logger().log(f, f"Exception occured while saved the fitting model. Exception: {str(e)}")
+            f.close()
+            raise e
     
-    def ModelEvaluationOnTestData(self, model):
+    def ModelEvaluationOnTestData(self):
         
         if not os.path.exists('LoggedData'):
             os.makedirs('LoggedData')
@@ -130,9 +149,9 @@ class ModelCreation:
         f = open(os.path.join('LoggedData', 'ModelCreation.txt'), 'a+')
 
         try:
-            self.model = model
+            model = keras.models.load_model(os.path.join('TrainedModel', 'TrainedANN.h5'))
 
-            model_loss, model_accuracy = self.model.evaluate(self.X_test, self.y_test)[0], self.model.evaluate(self.X_test, self.y_test)[1]
+            model_loss, model_accuracy = model.evaluate(self.X_test, self.y_test)[0], self.model.evaluate(self.X_test, self.y_test)[1]
 
             Logger().log(f, f"Model's loss on the test data: {np.round(model_loss,3)}")
             Logger().log(f, f"Model's accuracy on the test data: {np.round(model_accuracy,3)}")
@@ -148,7 +167,7 @@ class ModelCreation:
             raise e
 
     
-    def PredictionForNewData(self, input_array):
+    def PredictionForNewData(self, input_list):
 
         if not os.path.exists('LoggedData'):
             os.makedirs('LoggedData')
@@ -156,7 +175,10 @@ class ModelCreation:
         f = open(os.path.join('LoggedData', 'PredictionForNewData.txt'), 'a+')
 
         try:
-            y_proba = self.model.predict(input_array)
+            input_array = np.array(input_list).reshape(1,-1)
+
+            model = keras.models.load_model(os.path.join('TrainedModel', 'TrainedANN.h5'))
+            y_proba = model.predict(input_array)
             y_pred = np.argmax(y_proba, axis=1)
 
             Logger().log(f, f"Predicted value for the input array {input_array} is {y_pred}")
